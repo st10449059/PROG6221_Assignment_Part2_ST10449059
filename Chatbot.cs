@@ -109,9 +109,10 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: {definition} \nRandom Tip: {_phishingTips[_rng.Next(_phishingTips.Length)]}";
             }
 
+            // Task 2: Specific keyword recognition for cybersecurity guidance
             if (cleanInput.Contains("browsing"))
             {
-                return $"{BotName}: (Ref: Cloudflare, 2024) Safe browsing means using HTTPS and checking the padlock icon in your URL bar.";
+                return "CyberShield: Safe browsing means using HTTPS. (Ref: Cloudflare, 2024).";
             }
 
             if (cleanInput.Contains("how are you"))
