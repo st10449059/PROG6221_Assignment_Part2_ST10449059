@@ -82,7 +82,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
             // --- TASK 6: SENTIMENT DETECTION ---
             if (cleanInput.Contains("worried") || cleanInput.Contains("scared") || cleanInput.Contains("frustrated"))
             {
-                return $"{BotName}: It's completely understandable to feel that way. Scammers can be very convincing. " +
+                return $"{BotName}: It's completely understandable to feel that way. Scammers can be very convincing. Let me share some tips to help you stay safe " +
                        $"\nTip: {_phishingTips[_rng.Next(_phishingTips.Length)]}";
             }
 
