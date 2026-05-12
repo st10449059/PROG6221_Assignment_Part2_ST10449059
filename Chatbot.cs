@@ -35,6 +35,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
     ::================================::";
         }
 
+        // Task 1 & 7: Multimedia integration with error handling
         public void PlayVoiceGreeting()
         {
             try
@@ -42,10 +43,10 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "greeting.wav");
                 if (File.Exists(path))
                 {
-                    using (SoundPlayer player = new SoundPlayer(path)) { player.Play(); }
+                    using (var player = new System.Media.SoundPlayer(path)) { player.Play(); }
                 }
             }
-            catch (Exception) { /* Task 7: Function smoothly on errors */ }
+            catch { /* Silent fail for Task 7 compliance */ }
         }
 
         public string ProcessInput(string input)
