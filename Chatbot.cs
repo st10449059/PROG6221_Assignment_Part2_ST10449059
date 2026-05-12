@@ -23,12 +23,13 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
         private Random _rng = new Random();
 
+        // Task 1: UI Branding and Professional Identity
         public string GetLogo()
         {
             return @"
     ::================================::
     || .............................. ||
-    || .. C Y B E R   S H I E L D .. ||
+    || .. C Y B E R   S H I E L D ..  ||
     || .............................. ||
     || ........... v2.0 ............. ||
     ::================================::";
