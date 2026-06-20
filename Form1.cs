@@ -85,16 +85,51 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 {
                     // Pass input parameter down to processing engine layers
                     string response = myBot.ProcessInput(input);
-                    richTextBox1.SelectionColor = Color.Cyan;
-                    richTextBox1.AppendText(response + Environment.NewLine);
 
-                    // REFRESH CHECK: If the user just ran a task command, sync our visual UI Grid view automatically!
-                    string cleanInp = input.ToLower();
-                    if (cleanInp.StartsWith("add task ") ||
-                        cleanInp.StartsWith("complete task ") || cleanInp.StartsWith("finish task ") ||
-                        cleanInp.StartsWith("delete task ") || cleanInp.StartsWith("remove task "))
+                    // --- DYNAMIC REMINDER COMMAND ROUTER ---
+                    if (response.StartsWith("REMINDER_UPDATE:"))
                     {
-                        RefreshTaskList();
+                        if (int.TryParse(response.Split(':')[1], out int days))
+                        {
+                            // Ensure the user actually has a valid grid row selected to attach the reminder to
+                            if (dgvTasks.CurrentRow != null && dgvTasks.CurrentRow.Cells["id"].Value != null)
+                            {
+                                int targetId = Convert.ToInt32(dgvTasks.CurrentRow.Cells["id"].Value);
+                                bool success = myBot.UpdateTaskReminder(targetId, days);
+
+                                richTextBox1.SelectionColor = Color.Cyan;
+                                if (success)
+                                {
+                                    richTextBox1.AppendText($"CyberShield: Confirmed. Database entity Record #{targetId} will trigger a reminder in {days} days.\n");
+                                }
+                                else
+                                {
+                                    richTextBox1.AppendText($"CyberShield: Alert. Failed to alter the reminder schedule for Record #{targetId}.\n");
+                                }
+
+                                RefreshTaskList();
+                            }
+                            else
+                            {
+                                richTextBox1.SelectionColor = Color.Orange;
+                                richTextBox1.AppendText("CyberShield: Alert! You must highlight a specific task row in the grid view first before setting a schedule.\n");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Standard chat handling
+                        richTextBox1.SelectionColor = Color.Cyan;
+                        richTextBox1.AppendText(response + Environment.NewLine);
+
+                        // REFRESH CHECK: If the user just ran a task command, sync our visual UI Grid view automatically!
+                        string cleanInp = input.ToLower();
+                        if (cleanInp.StartsWith("add task ") ||
+                            cleanInp.StartsWith("complete task ") || cleanInp.StartsWith("finish task ") ||
+                            cleanInp.StartsWith("delete task ") || cleanInp.StartsWith("remove task "))
+                        {
+                            RefreshTaskList();
+                        }
                     }
                 }
 

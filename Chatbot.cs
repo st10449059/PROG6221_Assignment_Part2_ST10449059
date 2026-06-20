@@ -8,6 +8,17 @@ using MySql.Data.MySqlClient; // CONNECTIVITY: Bridges application layer directl
 namespace PROG6221_Assignment_Part2_ST10449059
 {
     /// <summary>
+    /// Helper class to structure the Quiz data as requested in Task 2.
+    /// </summary>
+    public class QuizQuestion
+    {
+        public string QuestionText { get; set; }
+        public string Options { get; set; }
+        public string CorrectAnswer { get; set; }
+        public string Explanation { get; set; }
+    }
+
+    /// <summary>
     /// Chatbot logic class responsible for processing cybersecurity queries and handling task database records.
     /// </summary>
     public class Chatbot
@@ -30,6 +41,89 @@ namespace PROG6221_Assignment_Part2_ST10449059
         };
 
         private Random _rng = new Random();
+
+        // ==========================================
+        //  TASK 2: QUIZ MINI-GAME STATE & DATA
+        // ==========================================
+        public bool IsQuizActive { get; private set; } = false;
+        private int _quizScore = 0;
+        private int _currentQuestionIndex = 0;
+        private List<QuizQuestion> _quizQuestions;
+
+        // Constructor to initialize the quiz questions
+        public Chatbot()
+        {
+            // Initialize 11 questions covering required cybersecurity topics (Mixed Multiple Choice & True/False)
+            _quizQuestions = new List<QuizQuestion>
+            {
+                new QuizQuestion {
+                    QuestionText = "What should you do if you receive an email asking for your password?",
+                    Options = "A) Reply with your password\nB) Delete the email\nC) Report the email as phishing\nD) Ignore it",
+                    CorrectAnswer = "c",
+                    Explanation = "Reporting phishing emails helps security teams block the sender and prevent scams."
+                },
+                new QuizQuestion {
+                    QuestionText = "True or False: Using the same password for all your accounts is safe if it is very complex.",
+                    Options = "A) True\nB) False",
+                    CorrectAnswer = "b",
+                    Explanation = "False. If one database gets breached, hackers will try that complex password on every other site."
+                },
+                new QuizQuestion {
+                    QuestionText = "What does the 's' in 'https' stand for in a website URL?",
+                    Options = "A) Standard\nB) Secure\nC) System\nD) Socket",
+                    CorrectAnswer = "b",
+                    Explanation = "It stands for Secure. It means the data sent between your browser and the site is encrypted."
+                },
+                new QuizQuestion {
+                    QuestionText = "Someone calls claiming to be from IT and needs your login to 'fix a server issue'. What is this an example of?",
+                    Options = "A) Malware\nB) Ransomware\nC) Social Engineering\nD) Brute Force",
+                    CorrectAnswer = "c",
+                    Explanation = "Social Engineering involves manipulating humans rather than hacking software."
+                },
+                new QuizQuestion {
+                    QuestionText = "True or False: A padlock icon in the browser means a website is 100% safe to buy from.",
+                    Options = "A) True\nB) False",
+                    CorrectAnswer = "b",
+                    Explanation = "False. The padlock only means the connection is encrypted; scammers can easily set up encrypted sites."
+                },
+                new QuizQuestion {
+                    QuestionText = "What is the primary purpose of Two-Factor Authentication (2FA)?",
+                    Options = "A) To make logging in faster\nB) To require a second form of verification beyond just a password\nC) To encrypt your hard drive\nD) To block pop-up ads",
+                    CorrectAnswer = "b",
+                    Explanation = "2FA adds an extra layer of security, usually a code sent to your phone or an authenticator app."
+                },
+                new QuizQuestion {
+                    QuestionText = "True or False: You should always update your software and operating system as soon as updates are available.",
+                    Options = "A) True\nB) False",
+                    CorrectAnswer = "a",
+                    Explanation = "True. Updates often contain critical patches for newly discovered security vulnerabilities."
+                },
+                new QuizQuestion {
+                    QuestionText = "Which of the following makes the strongest password?",
+                    Options = "A) Your pet's name and birth year\nB) 'Password123'\nC) A randomly generated 16-character passphrase\nD) Your home address",
+                    CorrectAnswer = "c",
+                    Explanation = "Length and randomness are the best defenses against brute-force password cracking."
+                },
+                new QuizQuestion {
+                    QuestionText = "True or False: Public Wi-Fi networks at coffee shops are generally safe for online banking.",
+                    Options = "A) True\nB) False",
+                    CorrectAnswer = "b",
+                    Explanation = "False. Public Wi-Fi is often unsecured, allowing attackers to intercept your unencrypted data."
+                },
+                new QuizQuestion {
+                    QuestionText = "What is 'Ransomware'?",
+                    Options = "A) A tool to clean viruses\nB) Software that locks your files until you pay a fee\nC) A type of secure browser\nD) A firewall rule",
+                    CorrectAnswer = "b",
+                    Explanation = "Ransomware encrypts your data and demands payment (usually crypto) for the decryption key."
+                },
+                new QuizQuestion {
+                    QuestionText = "True or False: Phishing attacks only happen via email.",
+                    Options = "A) True\nB) False",
+                    CorrectAnswer = "b",
+                    Explanation = "False. Phishing can happen over SMS (Smishing), voice calls (Vishing), or social media."
+                }
+            };
+        }
 
         // TASK 1: System Identifiers
         public string GetLogo()
@@ -61,9 +155,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
         //         DATABASE CORE LOGIC ENGINE
         // ==========================================
 
-        /// <summary>
-        /// Reads all task rows active on the local MySQL schema instance.
-        /// </summary>
         public DataTable GetAllTasks()
         {
             DataTable dt = new DataTable();
@@ -86,9 +177,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             return dt;
         }
 
-        /// <summary>
-        /// Persists a new row entry directly inside the security_tasks database table.
-        /// </summary>
         public bool AddNewTask(string taskTitle)
         {
             try
@@ -112,9 +200,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
         }
 
-        /// <summary>
-        /// Targets a specific database record row via integer key matching and flips its boolean resolution flag to True.
-        /// </summary>
         public bool CompleteTaskById(int taskId)
         {
             try
@@ -138,9 +223,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
         }
 
-        /// <summary>
-        /// Discards a target task entity from the persistent database table storage cluster layout matching on explicit ID field.
-        /// </summary>
         public bool DeleteTaskById(int taskId)
         {
             try
@@ -164,13 +246,34 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
         }
 
+        public bool UpdateTaskReminder(int taskId, int days)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = "UPDATE security_tasks SET reminder_days = @days WHERE id = @id;";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@days", days);
+                        cmd.Parameters.AddWithValue("@id", taskId);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.Forms.MessageBox.Show("Database Update Error: " + ex.Message, "System Integrity Notice");
+                return false;
+            }
+        }
+
         // ==========================================
-        //        INTELLIGENT PROCESSING ENGINE
+        //         INTELLIGENT PROCESSING ENGINE
         // ==========================================
 
-        /// <summary>
-        /// Intercepts natural sentence strings and maps database mutations directly from the conversation feed pipeline.
-        /// </summary>
         public string ProcessInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -181,11 +284,73 @@ namespace PROG6221_Assignment_Part2_ST10449059
             string cleanInput = input.Trim().ToLower();
             string BotName = "CyberShield";
 
+            // ==========================================
+            //  TASK 2: QUIZ MODE ROUTING
+            // ==========================================
+            if (cleanInput == "start quiz" && !IsQuizActive)
+            {
+                IsQuizActive = true;
+                _quizScore = 0;
+                _currentQuestionIndex = 0;
+
+                var firstQ = _quizQuestions[_currentQuestionIndex];
+                return $"{BotName}: 🎮 Cybersecurity Quiz Started! Type A, B, C, or D to answer.\n\n" +
+                       $"Question {_currentQuestionIndex + 1}/{_quizQuestions.Count}: {firstQ.QuestionText}\n{firstQ.Options}";
+            }
+
+            if (IsQuizActive)
+            {
+                // Ensure the user actually typed a valid option (A, B, C, or D)
+                if (cleanInput != "a" && cleanInput != "b" && cleanInput != "c" && cleanInput != "d")
+                {
+                    return $"{BotName}: Please answer using a single letter: A, B, C, or D.";
+                }
+
+                var currentQ = _quizQuestions[_currentQuestionIndex];
+                bool isCorrect = (cleanInput == currentQ.CorrectAnswer);
+
+                if (isCorrect) _quizScore++;
+
+                string feedback = isCorrect ? "✅ Correct!" : $"❌ Incorrect. The right answer was {currentQ.CorrectAnswer.ToUpper()}.";
+                string fullFeedback = $"{BotName}: {feedback} {currentQ.Explanation}\n\n";
+
+                _currentQuestionIndex++; // Move to next question
+
+                // Check if the game is over
+                if (_currentQuestionIndex >= _quizQuestions.Count)
+                {
+                    IsQuizActive = false;
+                    string finalEval = _quizScore >= 8 ? "Great job! You're a cybersecurity pro!" : "Keep learning to stay safe online!";
+
+                    return fullFeedback +
+                           $"🏁 Quiz Complete!\n" +
+                           $"Your Final Score: {_quizScore}/{_quizQuestions.Count}\n" +
+                           $"Evaluation: {finalEval}";
+                }
+                else
+                {
+                    // Send the next question
+                    var nextQ = _quizQuestions[_currentQuestionIndex];
+                    return fullFeedback +
+                           $"Question {_currentQuestionIndex + 1}/{_quizQuestions.Count}: {nextQ.QuestionText}\n{nextQ.Options}";
+                }
+            }
+
+            // --- SMART CHAT INTERCEPTION: REMINDER COMMAND ---
+            if (cleanInput.StartsWith("remind me in ") && cleanInput.Contains(" day"))
+            {
+                string numberPart = cleanInput.Replace("remind me in ", "").Split(' ')[0];
+                if (int.TryParse(numberPart, out int days))
+                {
+                    return $"REMINDER_UPDATE:{days}";
+                }
+                return $"{BotName}: Alert. Could not parse numerical index. Syntax validation requirement: 'remind me in [number] days'";
+            }
+
             // --- SMART CHAT INTERCEPTION: ADD TASK COMMAND ---
-            // Triggers on patterns like: "add task configure firewalls"
             if (cleanInput.StartsWith("add task "))
             {
-                string rawTaskTitle = input.Substring(9).Trim(); // Pulls out everything trailing after "add task "
+                string rawTaskTitle = input.Substring(9).Trim();
                 if (string.IsNullOrWhiteSpace(rawTaskTitle)) return $"{BotName}: The task title string cannot be blank.";
 
                 bool success = AddNewTask(rawTaskTitle);
@@ -197,7 +362,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
 
             // --- SMART CHAT INTERCEPTION: COMPLETE TASK COMMAND ---
-            // Triggers on patterns like: "complete task 5" or "finish task 1"
             if (cleanInput.StartsWith("complete task ") || cleanInput.StartsWith("finish task "))
             {
                 string numericSegment = cleanInput.Replace("complete task ", "").Replace("finish task ", "").Trim();
@@ -211,7 +375,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
 
             // --- SMART CHAT INTERCEPTION: DELETE TASK COMMAND ---
-            // Triggers on patterns like: "delete task 3" or "remove task 12"
             if (cleanInput.StartsWith("delete task ") || cleanInput.StartsWith("remove task "))
             {
                 string numericSegment = cleanInput.Replace("delete task ", "").Replace("remove task ", "").Trim();
@@ -248,7 +411,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: Great! I'll remember that you're interested in privacy, {UserName}.";
             }
 
-            // --- TASK 2: KEYWORD RECOGNITION (CYBERSECURITY GUIDANCE) ---
+            // --- TASK 2 (Original Fallback): KEYWORD RECOGNITION (CYBERSECURITY GUIDANCE) ---
             if (cleanInput.Contains("password"))
             {
                 LastTopic = "password";
@@ -278,7 +441,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
 
             // --- TASK 7: DEFAULT FALLBACK ---
-            return $"{BotName}: I'm not sure how to respond to that. Try asking about 'passwords', 'browsing', or 'scams'.\n💡 (Or manage tasks with 'add task [name]', 'complete task [ID]', or 'delete task [ID]')";
+            return $"{BotName}: I'm not sure how to respond to that. Try asking about 'passwords', 'browsing', or 'scams'.\n💡 (Or type 'start quiz' to play the mini-game, or manage tasks with 'add task [name]')";
         }
     }
 }
