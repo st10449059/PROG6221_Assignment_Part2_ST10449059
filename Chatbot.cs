@@ -8,6 +8,10 @@ using MySql.Data.MySqlClient;
 
 namespace PROG6221_Assignment_Part2_ST10449059
 {
+    /// <summary>
+    /// Represents a single question for the cybersecurity mini-game.
+    /// Stores the question text, multiple choice options, correct answer, and an educational explanation.
+    /// </summary>
     public class QuizQuestion
     {
         public string QuestionText { get; set; }
@@ -16,16 +20,24 @@ namespace PROG6221_Assignment_Part2_ST10449059
         public string Explanation { get; set; }
     }
 
+    /// <summary>
+    /// The core logic engine for the application. 
+    /// Handles database connectivity, natural language processing (NLP), quiz state management, and activity logging.
+    /// </summary>
     public class Chatbot
     {
+        // Database connection string mapping to the local MySQL server instance.
         private readonly string connectionString = "Server=localhost;Database=CyberShieldDB;Uid=root;Pwd=@Labs2026!;";
 
+        // State properties to track user context during the conversation session.
         public string UserName { get; set; } = "User";
         public string FavoriteTopic { get; set; } = "";
         public string LastTopic { get; set; } = "";
 
+        // TASK 4: Activity Log list used to store recent actions for the session summary.
         private List<string> _activityLog = new List<string>();
 
+        // Repository of randomized security tips for varied conversation flow.
         private string[] _phishingTips = {
             "Be cautious of emails asking for personal information. Scammers often disguise themselves as trusted organisations.",
             "Always check the sender's email address for slight misspellings or odd domains.",
@@ -34,11 +46,15 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
         private Random _rng = new Random();
 
+        // TASK 2: State variables managing the active cybersecurity quiz loop.
         public bool IsQuizActive { get; private set; } = false;
         private int _quizScore = 0;
         private int _currentQuestionIndex = 0;
         private List<QuizQuestion> _quizQuestions;
 
+        /// <summary>
+        /// Constructor initializes the list of cybersecurity quiz questions into memory.
+        /// </summary>
         public Chatbot()
         {
             _quizQuestions = new List<QuizQuestion>
@@ -57,6 +73,9 @@ namespace PROG6221_Assignment_Part2_ST10449059
             };
         }
 
+        /// <summary>
+        /// Returns the ASCII art logo for the application.
+        /// </summary>
         public string GetLogo()
         {
             return @"
@@ -64,10 +83,13 @@ namespace PROG6221_Assignment_Part2_ST10449059
     || .............................. ||
     || .. C Y B E R   S H I E L D ..  ||
     || .............................. ||
-    || ........... v2.0 ............. ||
+    || ........... v3.0 ............. ||
     ::================================::";
         }
 
+        /// <summary>
+        /// Plays a welcoming audio file on system startup. Fails silently if the file is not found.
+        /// </summary>
         public void PlayVoiceGreeting()
         {
             try
@@ -81,12 +103,23 @@ namespace PROG6221_Assignment_Part2_ST10449059
             catch { }
         }
 
+        /// <summary>
+        /// TASK 4: Records significant system events and timestamps them into the local activity array.
+        /// </summary>
+        /// <param name="actionDescription">A short description of the action completed.</param>
         private void LogActivity(string actionDescription)
         {
             string timeStampedAction = $"[{DateTime.Now:HH:mm}] {actionDescription}";
             _activityLog.Add(timeStampedAction);
         }
 
+        // ==========================================
+        // TASK 1: DATABASE INTEGRATION LOGIC (CRUD)
+        // ==========================================
+
+        /// <summary>
+        /// Retrieves all task records from the MySQL database to populate the DataGridView.
+        /// </summary>
         public DataTable GetAllTasks()
         {
             DataTable dt = new DataTable();
@@ -103,6 +136,9 @@ namespace PROG6221_Assignment_Part2_ST10449059
             return dt;
         }
 
+        /// <summary>
+        /// Inserts a new task record into the database and triggers a log entry.
+        /// </summary>
         public bool AddNewTask(string taskTitle)
         {
             try
@@ -124,6 +160,9 @@ namespace PROG6221_Assignment_Part2_ST10449059
             catch { return false; }
         }
 
+        /// <summary>
+        /// Updates a specific task's boolean status to completed (1).
+        /// </summary>
         public bool CompleteTaskById(int taskId)
         {
             try
@@ -145,6 +184,9 @@ namespace PROG6221_Assignment_Part2_ST10449059
             catch { return false; }
         }
 
+        /// <summary>
+        /// Deletes a specific task record from the database based on its unique ID.
+        /// </summary>
         public bool DeleteTaskById(int taskId)
         {
             try
@@ -166,6 +208,9 @@ namespace PROG6221_Assignment_Part2_ST10449059
             catch { return false; }
         }
 
+        /// <summary>
+        /// Updates the reminder interval schedule for a specific database row.
+        /// </summary>
         public bool UpdateTaskReminder(int taskId, int days)
         {
             try
@@ -188,6 +233,14 @@ namespace PROG6221_Assignment_Part2_ST10449059
             catch { return false; }
         }
 
+        // ==========================================
+        // NLP AND CONVERSATIONAL ROUTING ENGINE
+        // ==========================================
+
+        /// <summary>
+        /// Processes string input from the user. Uses Natural Language Processing (Regex) 
+        /// to identify intent, trigger database updates, or respond conversationally.
+        /// </summary>
         public string ProcessInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return "CyberShield: Please provide an interaction query.";
@@ -195,7 +248,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
             string cleanInput = input.Trim().ToLower();
             string BotName = "CyberShield";
 
-            // TASK 4: Show Activity Log (Full History Option for max marks)
+            // TASK 4: Show Activity Log (Full History Option for max rubric marks)
             if (cleanInput.Contains("show all activity") || cleanInput.Contains("full log") || cleanInput.Contains("show more"))
             {
                 if (_activityLog.Count == 0) return $"{BotName}: I haven't performed any specific actions for you yet this session.";
@@ -208,7 +261,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return fullSummary;
             }
 
-            // TASK 4: Show Activity Log (Limits to recent 5-10 actions)
+            // TASK 4: Show Activity Log (Limits to recent 8 actions for clean console output)
             if (cleanInput.Contains("activity log") || cleanInput.Contains("what have you done") || cleanInput.Contains("recent actions") || cleanInput.Contains("show log"))
             {
                 if (_activityLog.Count == 0) return $"{BotName}: I haven't performed any specific actions for you yet this session.";
@@ -224,7 +277,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return summary;
             }
 
-            // NLP INTENT: Reminders 
+            // TASK 3: NLP INTENT - Reminders (Pattern Matching)
             Match reminderMatch = Regex.Match(cleanInput, @"(?:remind me to|add a reminder to|set a reminder for)\s+(.+?)(?:\s+(tomorrow|today|in \d+ days))?$");
             if (reminderMatch.Success)
             {
@@ -237,7 +290,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: Reminder set for '{taskContent}' on {timeFrame}'s date.";
             }
 
-            // NLP INTENT: Adding Tasks 
+            // TASK 3: NLP INTENT - Adding Tasks (Pattern Matching)
             Match taskMatch = Regex.Match(cleanInput, @"(?:add a task to|create a task to|add task|create task)\s+(.+)");
             if (taskMatch.Success)
             {
@@ -256,10 +309,11 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 LogActivity("Quiz started.");
 
                 var firstQ = _quizQuestions[_currentQuestionIndex];
-                return $"{BotName}: 🎮 Cybersecurity Quiz Started! Type A, B, C, or D to answer.\n\n" +
+                return $"{BotName}: Cybersecurity Quiz Started! Type A, B, C, or D to answer.\n\n" +
                        $"Question {_currentQuestionIndex + 1}/{_quizQuestions.Count}: {firstQ.QuestionText}\n{firstQ.Options}";
             }
 
+            // Active Quiz State Handling
             if (IsQuizActive)
             {
                 if (cleanInput != "a" && cleanInput != "b" && cleanInput != "c" && cleanInput != "d")
@@ -272,7 +326,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
                 if (isCorrect) _quizScore++;
 
-                string feedback = isCorrect ? "✅ Correct!" : $"❌ Incorrect. The right answer was {currentQ.CorrectAnswer.ToUpper()}.";
+                string feedback = isCorrect ? " Correct!" : $"Incorrect. The right answer was {currentQ.CorrectAnswer.ToUpper()}.";
                 string fullFeedback = $"{BotName}: {feedback} {currentQ.Explanation}\n\n";
 
                 _currentQuestionIndex++;
@@ -284,7 +338,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
                     string finalEval = _quizScore >= 8 ? "Great job! You're a cybersecurity pro!" : "Keep learning to stay safe online!";
                     return fullFeedback +
-                           $"🏁 Quiz Complete!\n" +
+                           $"Quiz Complete!\n" +
                            $"Your Final Score: {_quizScore}/{_quizQuestions.Count}\n" +
                            $"Evaluation: {finalEval}";
                 }
@@ -296,7 +350,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 }
             }
 
-            // SMART CHAT INTERCEPTION: COMPLETE TASK COMMAND
+            // DIRECT COMMAND: Complete Task
             if (cleanInput.StartsWith("complete task ") || cleanInput.StartsWith("finish task "))
             {
                 string numericSegment = cleanInput.Replace("complete task ", "").Replace("finish task ", "").Trim();
@@ -309,7 +363,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: I failed to resolve an execution index identifier parameter. Syntax protocol usage: 'complete task [ID number]'";
             }
 
-            // SMART CHAT INTERCEPTION: DELETE TASK COMMAND
+            // DIRECT COMMAND: Delete Task
             if (cleanInput.StartsWith("delete task ") || cleanInput.StartsWith("remove task ") || cleanInput.StartsWith("delete "))
             {
                 string numericString = string.Empty;
@@ -324,7 +378,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: Parsing target structure fault. Syntax pattern validation requirement: 'delete task [ID number]'";
             }
 
-            // SEAMLESS CONVERSATION FLOW
+            // SEAMLESS CONVERSATION FLOW (Context Recall)
             if (cleanInput.Contains("another") || cleanInput.Contains("more") || cleanInput.Contains("explain"))
             {
                 if (LastTopic == "phishing") return $"{BotName}: Here is another phishing tip: {_phishingTips[_rng.Next(_phishingTips.Length)]}";
@@ -334,11 +388,13 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: I'd be happy to explain more! Try asking about 'passwords', 'browsing', or 'scams'.";
             }
 
+            // SENTIMENT DETECTION
             if (cleanInput.Contains("worried") || cleanInput.Contains("scared") || cleanInput.Contains("frustrated"))
             {
                 return $"{BotName}: It's completely understandable to feel that way. Scammers can be very convincing. \nTip: {_phishingTips[_rng.Next(_phishingTips.Length)]}";
             }
 
+            // CONVERSATION MEMORY: Store user preferences
             if (cleanInput.Contains("interested in privacy") || cleanInput.Contains("privacy"))
             {
                 FavoriteTopic = "privacy";
@@ -347,6 +403,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: Great! I'll remember that you're interested in privacy, {UserName}.";
             }
 
+            // KEYWORD RESPONSES: Cybersecurity Education
             if (cleanInput.Contains("firewall"))
             {
                 LastTopic = "firewalls";
@@ -381,7 +438,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: My purpose is to serve as your personal cybersecurity assistant.";
             }
 
-            // LIMITED DEFAULT FALLBACK
+            // DEFAULT FALLBACK 
             return $"{BotName}: I didn't quite understand that. Are you trying to add a task, set a reminder, view your activity log, or take a quiz?";
         }
     }
