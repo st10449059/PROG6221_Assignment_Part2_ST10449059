@@ -1,4 +1,5 @@
 using System;
+using System.Data; // Added to allow C# to handle database data tables
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -36,6 +37,29 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
             myBot.PlayVoiceGreeting();
             textBox2.Focus();
+
+            // --- PART 3 ADDITION: Load database items automatically on startup ---
+            RefreshTaskList();
+        }
+
+        /// <summary>
+        /// PART 3 ADDITION: Helper method to sync the DataGridView with the MySQL database.
+        /// </summary>
+        private void RefreshTaskList()
+        {
+            try
+            {
+                // 1. Fetch the data table from our Chatbot logic layer
+                DataTable tasksData = myBot.GetAllTasks();
+
+                // 2. Bind the data table to your visual dgvTasks grid on the form
+                dgvTasks.DataSource = tasksData;
+            }
+            catch (Exception ex)
+            {
+                // Simple error catch to notify you if the database fails to link up
+                MessageBox.Show("Could not load tasks into the grid view: " + ex.Message, "UI Sync Notice");
+            }
         }
 
         private async void button1_Click(object sender, EventArgs e)
@@ -76,9 +100,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
         private void richTextBox1_TextChanged(object sender, EventArgs e) { }
 
-        private void richTextBox1_TextChanged_1(object sender, EventArgs e)
-        {
-
-        }
+        private void richTextBox1_TextChanged_1(object sender, EventArgs e) { }
     }
 }

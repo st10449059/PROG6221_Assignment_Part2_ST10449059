@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Media;
+using System.Data; // PART 3 ADDITION: Allows us to use DataTables to hold database rows
 using System.IO;
+using System.Media;
+using MySql.Data.MySqlClient; // PART 3 ADDITION: Connects C# to your local MySQL server
 
 namespace PROG6221_Assignment_Part2_ST10449059
 {
@@ -12,6 +14,10 @@ namespace PROG6221_Assignment_Part2_ST10449059
     /// </summary>
     public class Chatbot
     {
+        // --- PART 3 ADDITION: Database Connection Configuration ---
+        // NOTE: If you set a custom password when you installed MySQL, replace 'YourPassword' with it.
+        private readonly string connectionString = "Server=localhost;Database=CyberShieldDB;Uid=root;Pwd=@Labs2026!;";
+
         // TASK 5: Memory - Stores user-specific data to personalize interaction
         public string UserName { get; set; } = "User";
         public string FavoriteTopic { get; set; } = "";
@@ -52,6 +58,40 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 }
             }
             catch { /* TASK 7: Silent fail ensures the app doesn't crash if audio fails */ }
+        }
+
+        // --- PART 3 ADDITION: Fetch all tasks from MySQL ---
+        /// <summary>
+        /// Reads all task records directly out of your MySQL database table 
+        /// and hands them back as a DataTable to populate Form1's DataGridView.
+        /// </summary>
+        public DataTable GetAllTasks()
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                // 1. Establish a secure link to the local MySQL Server using our connection string
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    // Open the database tunnel
+                    conn.Open();
+
+                    // 2. Define the standard SQL command to fetch your security tasks
+                    string query = "SELECT id, title, description, reminder_days, is_completed FROM security_tasks ORDER BY id DESC;";
+
+                    // 3. Use the DataAdapter to extract the raw rows and fill up our C# DataTable container
+                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(query, conn))
+                    {
+                        adapter.Fill(dt);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Displays a safe error warning box if your connection credentials or server is offline
+                System.Windows.Forms.MessageBox.Show("Database Read Error: " + ex.Message, "Database Status");
+            }
+            return dt;
         }
 
         /// <summary>
