@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data; // PART 3 MULTI-TASKING: Handles local memory row caching
+using System.Data;
 using System.IO;
 using System.Media;
-using MySql.Data.MySqlClient; // CONNECTIVITY: Bridges application layer directly to local MySQL engine
+using System.Text.RegularExpressions; // Added for Task 3 NLP keyword matching
+using MySql.Data.MySqlClient;
 
 namespace PROG6221_Assignment_Part2_ST10449059
 {
-    /// <summary>
-    /// Helper class to structure the Quiz data as requested in Task 2.
-    /// </summary>
     public class QuizQuestion
     {
         public string QuestionText { get; set; }
@@ -18,22 +16,17 @@ namespace PROG6221_Assignment_Part2_ST10449059
         public string Explanation { get; set; }
     }
 
-    /// <summary>
-    /// Chatbot logic class responsible for processing cybersecurity queries and handling task database records.
-    /// </summary>
     public class Chatbot
     {
-        // --- DATABASE PIPELINE SETUP ---
         private readonly string connectionString = "Server=localhost;Database=CyberShieldDB;Uid=root;Pwd=@Labs2026!;";
 
-        // TASK 5: Memory state management properties
         public string UserName { get; set; } = "User";
         public string FavoriteTopic { get; set; } = "";
-
-        // TASK 4: Context Tracking variables
         public string LastTopic { get; set; } = "";
 
-        // TASK 3: Defensive security advisory repository
+        // TASK 3: Track recent actions for the NLP summary request
+        private List<string> _actionHistory = new List<string>();
+
         private string[] _phishingTips = {
             "Be cautious of emails asking for personal information. Scammers often disguise themselves as trusted organisations.",
             "Always check the sender's email address for slight misspellings or odd domains.",
@@ -42,18 +35,13 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
         private Random _rng = new Random();
 
-        // ==========================================
-        //  TASK 2: QUIZ MINI-GAME STATE & DATA
-        // ==========================================
         public bool IsQuizActive { get; private set; } = false;
         private int _quizScore = 0;
         private int _currentQuestionIndex = 0;
         private List<QuizQuestion> _quizQuestions;
 
-        // Constructor to initialize the quiz questions
         public Chatbot()
         {
-            // Initialize 11 questions covering required cybersecurity topics (Mixed Multiple Choice & True/False)
             _quizQuestions = new List<QuizQuestion>
             {
                 new QuizQuestion {
@@ -125,7 +113,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             };
         }
 
-        // TASK 1: System Identifiers
         public string GetLogo()
         {
             return @"
@@ -137,7 +124,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
     ::================================::";
         }
 
-        // TASK 1 & 7: IO operations hardware check
         public void PlayVoiceGreeting()
         {
             try
@@ -148,12 +134,8 @@ namespace PROG6221_Assignment_Part2_ST10449059
                     using (var player = new SoundPlayer(path)) { player.Play(); }
                 }
             }
-            catch { /* Silent fail safety boundary */ }
+            catch { }
         }
-
-        // ==========================================
-        //         DATABASE CORE LOGIC ENGINE
-        // ==========================================
 
         public DataTable GetAllTasks()
         {
@@ -270,10 +252,6 @@ namespace PROG6221_Assignment_Part2_ST10449059
             }
         }
 
-        // ==========================================
-        //         INTELLIGENT PROCESSING ENGINE
-        // ==========================================
-
         public string ProcessInput(string input)
         {
             if (string.IsNullOrWhiteSpace(input))
@@ -284,23 +262,60 @@ namespace PROG6221_Assignment_Part2_ST10449059
             string cleanInput = input.Trim().ToLower();
             string BotName = "CyberShield";
 
-            // ==========================================
-            //  TASK 2: QUIZ MODE ROUTING
-            // ==========================================
-            if (cleanInput == "start quiz" && !IsQuizActive)
+            // TASK 3 NLP: Summary of recent actions
+            if (cleanInput.Contains("what have you done") || cleanInput.Contains("recent actions") || cleanInput.Contains("summary"))
+            {
+                if (_actionHistory.Count == 0) return $"{BotName}: I haven't performed any specific actions for you yet this session.";
+
+                string summary = $"{BotName}: Here's a summary of recent actions:\n";
+                for (int i = 0; i < _actionHistory.Count; i++)
+                {
+                    summary += $"  {i + 1}. {_actionHistory[i]}\n";
+                }
+                return summary;
+            }
+
+            // TASK 3 NLP: Flexible Reminders 
+            Match reminderMatch = Regex.Match(cleanInput, @"(?:remind me to|add a reminder to|set a reminder for)\s+(.+?)(?:\s+(tomorrow|today|in \d+ days))?$");
+            if (reminderMatch.Success)
+            {
+                string taskContent = reminderMatch.Groups[1].Value.Trim().TrimEnd('.');
+                string timeFrame = string.IsNullOrWhiteSpace(reminderMatch.Groups[2].Value) ? "soon" : reminderMatch.Groups[2].Value;
+
+                AddNewTask(taskContent);
+                string historyLog = $"Reminder set for '{taskContent}' {timeFrame}.";
+                _actionHistory.Add(historyLog);
+
+                return $"{BotName}: Reminder set for '{taskContent}' on {timeFrame}'s date.";
+            }
+
+            // TASK 3 NLP: Flexible Task Adding
+            Match taskMatch = Regex.Match(cleanInput, @"(?:add a task to|create a task to|add task|create task)\s+(.+)");
+            if (taskMatch.Success)
+            {
+                string taskContent = taskMatch.Groups[1].Value.Trim().TrimEnd('.');
+
+                AddNewTask(taskContent);
+                string historyLog = $"Task added: '{taskContent}' (no reminder set).";
+                _actionHistory.Add(historyLog);
+
+                return $"{BotName}: Task added: '{taskContent}'. Would you like to set a reminder for this task?";
+            }
+
+            // TASK 2: QUIZ MODE ROUTING
+            if (cleanInput.Contains("start") && cleanInput.Contains("quiz") && !IsQuizActive)
             {
                 IsQuizActive = true;
                 _quizScore = 0;
                 _currentQuestionIndex = 0;
 
                 var firstQ = _quizQuestions[_currentQuestionIndex];
-                return $"{BotName}: 🎮 Cybersecurity Quiz Started! Type A, B, C, or D to answer.\n\n" +
+                return $"{BotName}: Cybersecurity Quiz Started! Type A, B, C, or D to answer.\n\n" +
                        $"Question {_currentQuestionIndex + 1}/{_quizQuestions.Count}: {firstQ.QuestionText}\n{firstQ.Options}";
             }
 
             if (IsQuizActive)
             {
-                // Ensure the user actually typed a valid option (A, B, C, or D)
                 if (cleanInput != "a" && cleanInput != "b" && cleanInput != "c" && cleanInput != "d")
                 {
                     return $"{BotName}: Please answer using a single letter: A, B, C, or D.";
@@ -311,57 +326,30 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
                 if (isCorrect) _quizScore++;
 
-                string feedback = isCorrect ? "✅ Correct!" : $"❌ Incorrect. The right answer was {currentQ.CorrectAnswer.ToUpper()}.";
+                string feedback = isCorrect ? " Correct!" : $" Incorrect. The right answer was {currentQ.CorrectAnswer.ToUpper()}.";
                 string fullFeedback = $"{BotName}: {feedback} {currentQ.Explanation}\n\n";
 
-                _currentQuestionIndex++; // Move to next question
+                _currentQuestionIndex++;
 
-                // Check if the game is over
                 if (_currentQuestionIndex >= _quizQuestions.Count)
                 {
                     IsQuizActive = false;
                     string finalEval = _quizScore >= 8 ? "Great job! You're a cybersecurity pro!" : "Keep learning to stay safe online!";
 
                     return fullFeedback +
-                           $"🏁 Quiz Complete!\n" +
+                           $"Quiz Complete!\n" +
                            $"Your Final Score: {_quizScore}/{_quizQuestions.Count}\n" +
                            $"Evaluation: {finalEval}";
                 }
                 else
                 {
-                    // Send the next question
                     var nextQ = _quizQuestions[_currentQuestionIndex];
                     return fullFeedback +
                            $"Question {_currentQuestionIndex + 1}/{_quizQuestions.Count}: {nextQ.QuestionText}\n{nextQ.Options}";
                 }
             }
 
-            // --- SMART CHAT INTERCEPTION: REMINDER COMMAND ---
-            if (cleanInput.StartsWith("remind me in ") && cleanInput.Contains(" day"))
-            {
-                string numberPart = cleanInput.Replace("remind me in ", "").Split(' ')[0];
-                if (int.TryParse(numberPart, out int days))
-                {
-                    return $"REMINDER_UPDATE:{days}";
-                }
-                return $"{BotName}: Alert. Could not parse numerical index. Syntax validation requirement: 'remind me in [number] days'";
-            }
-
-            // --- SMART CHAT INTERCEPTION: ADD TASK COMMAND ---
-            if (cleanInput.StartsWith("add task "))
-            {
-                string rawTaskTitle = input.Substring(9).Trim();
-                if (string.IsNullOrWhiteSpace(rawTaskTitle)) return $"{BotName}: The task title string cannot be blank.";
-
-                bool success = AddNewTask(rawTaskTitle);
-                if (success)
-                {
-                    return $"{BotName}: Success! I have recorded your administrative requirement into the active schema:\n👉 \"{rawTaskTitle}\"";
-                }
-                return $"{BotName}: Alert. I encountered an operational structural anomaly committing that file record to the database engine.";
-            }
-
-            // --- SMART CHAT INTERCEPTION: COMPLETE TASK COMMAND ---
+            // SMART CHAT INTERCEPTION: COMPLETE TASK COMMAND
             if (cleanInput.StartsWith("complete task ") || cleanInput.StartsWith("finish task "))
             {
                 string numericSegment = cleanInput.Replace("complete task ", "").Replace("finish task ", "").Trim();
@@ -374,7 +362,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: I failed to resolve an execution index identifier parameter. Syntax protocol usage: 'complete task [ID number]'";
             }
 
-            // --- SMART CHAT INTERCEPTION: DELETE TASK COMMAND ---
+            // SMART CHAT INTERCEPTION: DELETE TASK COMMAND
             if (cleanInput.StartsWith("delete task ") || cleanInput.StartsWith("remove task "))
             {
                 string numericSegment = cleanInput.Replace("delete task ", "").Replace("remove task ", "").Trim();
@@ -387,7 +375,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: Parsing target structure fault. Syntax pattern validation requirement: 'delete task [ID number]'";
             }
 
-            // --- TASK 4: SEAMLESS CONVERSATION FLOW ---
+            // TASK 4: SEAMLESS CONVERSATION FLOW
             if (cleanInput.Contains("another") || cleanInput.Contains("more") || cleanInput.Contains("explain"))
             {
                 if (LastTopic == "phishing") return $"{BotName}: Here is another phishing tip: {_phishingTips[_rng.Next(_phishingTips.Length)]}";
@@ -397,13 +385,13 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: I'd be happy to explain more! Try asking about 'passwords', 'browsing', or 'scams'.";
             }
 
-            // --- TASK 6: SENTIMENT DETECTION ---
+            // TASK 6: SENTIMENT DETECTION
             if (cleanInput.Contains("worried") || cleanInput.Contains("scared") || cleanInput.Contains("frustrated"))
             {
                 return $"{BotName}: It's completely understandable to feel that way. Scammers can be very convincing. \nTip: {_phishingTips[_rng.Next(_phishingTips.Length)]}";
             }
 
-            // --- TASK 5: MEMORY (STORE) ---
+            // TASK 5: MEMORY (STORE)
             if (cleanInput.Contains("interested in privacy") || cleanInput.Contains("privacy"))
             {
                 FavoriteTopic = "privacy";
@@ -411,7 +399,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: Great! I'll remember that you're interested in privacy, {UserName}.";
             }
 
-            // --- TASK 2 (Original Fallback): KEYWORD RECOGNITION (CYBERSECURITY GUIDANCE) ---
+            // TASK 2 / TASK 3 NLP: KEYWORD RECOGNITION (CYBERSECURITY GUIDANCE)
             if (cleanInput.Contains("password"))
             {
                 LastTopic = "password";
@@ -440,8 +428,8 @@ namespace PROG6221_Assignment_Part2_ST10449059
                 return $"{BotName}: My purpose is to serve as your personal cybersecurity assistant.";
             }
 
-            // --- TASK 7: DEFAULT FALLBACK ---
-            return $"{BotName}: I'm not sure how to respond to that. Try asking about 'passwords', 'browsing', or 'scams'.\n💡 (Or type 'start quiz' to play the mini-game, or manage tasks with 'add task [name]')";
+            // TASK 3: LIMITED DEFAULT FALLBACK
+            return $"{BotName}: I didn't quite understand that. Are you trying to add a task, set a reminder, or take a quiz?";
         }
     }
 }
