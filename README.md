@@ -5,8 +5,7 @@
 https://github.com/st10449059/PROG6221_Assignment_POE_ST10449059
 
 # Commits 
-<img width="1917" height="900" alt="image" src="https://github.com/user-attachments/assets/05dab741-5ced-40fa-80b8-da35629164de" />
-
+<img width="1918" height="1018" alt="Screenshot 2026-06-20 222136" src="https://github.com/user-attachments/assets/b55d6c0f-bf4c-4562-9f37-12bb4eeaf9aa" />
 
 
 # Logo 
@@ -17,7 +16,7 @@ i just changed the v1 to v3
 [greeting.wav](https://github.com/user-attachments/files/27719935/greeting.wav)
 
 # Releases
-
+<img width="1917" height="900" alt="image" src="https://github.com/user-attachments/assets/05dab741-5ced-40fa-80b8-da35629164de" />
 
 # References 
 APWG (Anti-Phishing Working Group) (2024) Phishing Activity Trends Report. [Online] 
