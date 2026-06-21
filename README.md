@@ -16,7 +16,8 @@ i just changed the v1 to v3
 [greeting.wav](https://github.com/user-attachments/files/27719935/greeting.wav)
 
 # Releases
-<img width="1917" height="900" alt="image" src="https://github.com/user-attachments/assets/05dab741-5ced-40fa-80b8-da35629164de" />
+<img width="1917" height="962" alt="image" src="https://github.com/user-attachments/assets/46959e5c-3631-4182-8173-bd2c66cc4d98" />
+
 
 # References 
 APWG (Anti-Phishing Working Group) (2024) Phishing Activity Trends Report. [Online] 
