@@ -248,7 +248,7 @@ namespace PROG6221_Assignment_Part2_ST10449059
             string cleanInput = input.Trim().ToLower();
             string BotName = "CyberShield";
 
-            // TASK 4: Show Activity Log (Full History Option for max rubric marks)
+            // TASK 4: Show Activity Log 
             if (cleanInput.Contains("show all activity") || cleanInput.Contains("full log") || cleanInput.Contains("show more"))
             {
                 if (_activityLog.Count == 0) return $"{BotName}: I haven't performed any specific actions for you yet this session.";

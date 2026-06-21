@@ -40,17 +40,17 @@
             richTextBox1.Font = new Font("Consolas", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             richTextBox1.Location = new Point(0, 0);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(1503, 591);
+            richTextBox1.Size = new Size(1494, 711);
             richTextBox1.TabIndex = 0;
             richTextBox1.Text = "";
             // 
             // dgvTasks
             // 
             dgvTasks.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvTasks.Location = new Point(901, 0);
+            dgvTasks.Location = new Point(1034, 0);
             dgvTasks.Name = "dgvTasks";
             dgvTasks.RowHeadersWidth = 51;
-            dgvTasks.Size = new Size(602, 605);
+            dgvTasks.Size = new Size(469, 605);
             dgvTasks.TabIndex = 5;
             // 
             // Form1
@@ -58,7 +58,7 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlDarkDark;
-            ClientSize = new Size(1503, 583);
+            ClientSize = new Size(1494, 574);
             Controls.Add(dgvTasks);
             Controls.Add(richTextBox1);
             ForeColor = Color.LimeGreen;

@@ -28,7 +28,14 @@ namespace PROG6221_Assignment_Part2_ST10449059
         /// </summary>
         private void Form1_Load(object sender, EventArgs e)
         {
-            // 1. Apply terminal-style colors and flat layout to the main form controls
+            // --- NEW LAYOUT FIXES ---
+            // 1. Stop the text from hiding behind the grid
+            richTextBox1.Dock = DockStyle.Left;
+            richTextBox1.Width = 814;
+            dgvTasks.Dock = DockStyle.Fill; // Fills the remaining space on the right perfectly
+            // ------------------------
+
+            // Apply terminal-style colors and flat layout to the main form controls
             this.BackColor = Color.FromArgb(25, 25, 25);
             richTextBox1.BackColor = Color.Black;
             richTextBox1.ForeColor = Color.Cyan;
@@ -47,12 +54,16 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
             myBot.PlayVoiceGreeting();
 
-            // 2. Format the DataGridView to match the dark mode terminal theme
+            // Format the DataGridView to match the dark mode terminal theme
             dgvTasks.BackgroundColor = Color.FromArgb(25, 25, 25);
             dgvTasks.BorderStyle = BorderStyle.None;
             dgvTasks.GridColor = Color.FromArgb(60, 60, 60);
             dgvTasks.RowHeadersVisible = false;
             dgvTasks.AllowUserToAddRows = false;
+
+            // Layout fixes to remove the horizontal scrollbar and stretch columns
+            dgvTasks.ScrollBars = ScrollBars.Vertical;
+            dgvTasks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             dgvTasks.DefaultCellStyle.BackColor = Color.FromArgb(35, 35, 35);
             dgvTasks.DefaultCellStyle.ForeColor = Color.LightGray;
@@ -69,6 +80,12 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
             // Connect to database and populate the grid
             RefreshTaskList();
+
+            // Make the ID column only as wide as it needs to be after data is loaded
+            if (dgvTasks.Columns["id"] != null)
+            {
+                dgvTasks.Columns["id"].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            }
 
             // Set input focus to the terminal immediately upon loading
             richTextBox1.Focus();
@@ -110,6 +127,13 @@ namespace PROG6221_Assignment_Part2_ST10449059
 
                 if (!string.IsNullOrWhiteSpace(input))
                 {
+                    // Exit command implementation to close the application safely
+                    if (input.ToLower() == "exit" || input.ToLower() == "quit")
+                    {
+                        Application.Exit();
+                        return;
+                    }
+
                     // Artificial delay to simulate processing latency
                     await Task.Delay(300);
 
